@@ -3,6 +3,11 @@
 ## Overview
 SmartFactory DSES is a modern, real-time manufacturing intelligence dashboard designed to monitor and analyze factory performance. It integrates telemetry data, expert system diagnostics, and decision support tools to optimize production efficiency and predict maintenance needs.
 
+This system operates as a **Hybrid Intelligence** platform, combining the "Strategic Brain" of a **Decision Support System (DSS)** with the "Technical Specialist" logic of an **Expert System (ES)**:
+*   **Decision Support System (DSS)**: Synthesizes high-volume telemetry into actionable trends to detect health drifts and bottlenecks. It features a "What-If" Scenario Manager that runs simulations to balance production gains against energy costs and risk profiles.
+*   **Expert System (ES)**: Uses a Knowledge Base of 200+ codified rules and an Inference Engine to diagnose specific machine faults (e.g., "Critical Bearing Wear") with probability-based confidence scores, providing transparency through reasoning paths.
+*   **Hybrid Integration**: By integrating DSS trends with ES logic, the system closes the gap between observation and action. The DSS filters data noise to identify patterns, which the ES validates against engineering rules, ensuring every decision is backed by both statistical prediction and physical verification.
+
 ![Dashboard Preview](./assets/dashboard-preview.png)
 
 ## Key Features
