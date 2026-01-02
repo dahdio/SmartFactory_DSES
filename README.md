@@ -7,20 +7,20 @@ SmartFactory DSES is a modern, real-time manufacturing intelligence dashboard de
 
 ## Key Features
 
-### 📊 Real-Time Telemetry
+### Real-Time Telemetry
 - **Active Machines**: Live monitoring of machine status (ON/OFF) and operational capacity.
 - **Production Output**: Real-time tracking of production metrics against targets.
 - **Energy Efficiency**: Analysis of power consumption with identification of inefficient units.
 - **Active Alerts**: Use of an Expert System to detect and prioritize critical anomalies (e.g., Bearing Failures, Coolant Degradation).
 
-### 🧠 Intelligent Diagnostics
+### Intelligent Diagnostics
 - **Detailed Metrics**: Drill-down views for every machine showing:
   - Rule Processing Cost
   - Knowledge Base Hit Rate
   - Current & Projected Reliability
 - **Expert System Integration**: Automated pattern matching against 200+ rules to identify faults with high confidence.
 
-### 💻 User Experience
+### User Experience
 - **Interactive Modals**: Detailed breakdowns for Production, Energy, and Alerts with scrollable, content-rich interfaces.
 - **Dark/Light Theme**: Fully supported dynamic theming with persistent user preference.
 - **PDF Reporting**: One-click generation of professional "Daily Management Reports" for offline analysis.
