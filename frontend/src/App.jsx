@@ -104,7 +104,8 @@ function App() {
         timestamp: new Date(Date.now() - i * 3600000).toISOString(),
         temperature: m.temperature,
         vibration: m.vibration,
-        power: m.power
+        power: m.power,
+        signals: Math.floor(Math.random() * (1500 - 500) + 500) // Random signals between 500-1500
       })).reverse();
 
       setData({

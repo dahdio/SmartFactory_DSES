@@ -116,7 +116,18 @@ Total projected savings: 12% energy reduction without compromising production qu
                 doc.text('Confidential - Internal Use Only', 105, 290, { align: 'center' });
             }
 
-            doc.save(`SmartFactory_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+            // Manual save to ensure filename is respected
+            const filename = `SmartFactory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+            const blob = doc.output('blob');
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
             setExportParams({ isOpen: true, status: 'success' });
         }, 1500);
     };

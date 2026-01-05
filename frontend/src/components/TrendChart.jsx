@@ -5,7 +5,8 @@ export const TrendChart = ({ data, type }) => {
     const config = {
         temperature: { color: '#3b82f6', label: 'Temperature (°C)' },
         vibration: { color: '#10b981', label: 'Vibration (Hz)' },
-        power: { color: '#f59e0b', label: 'Power (kW)' }
+        power: { color: '#f59e0b', label: 'Power (kW)' },
+        signals: { color: '#8b5cf6', label: 'Signals / Hour' }
     };
 
     const { color, label } = config[type] || config.temperature;

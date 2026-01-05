@@ -1,3 +1,5 @@
 # in the terminal go to DSES/frontend then type
 
+# cd c:\Users\DAUD\DSES\frontend
+
 npm run dev

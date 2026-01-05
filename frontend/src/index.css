@@ -5,14 +5,32 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #09090b;
+  /* Light Mode Variables */
+  --color-background: #ffffff;
+  --color-surface: #f4f4f5;
+  --color-text-main: #18181b;
+  --color-text-muted: #71717a;
+
+  color-scheme: light;
+  color: var(--color-text-main);
+  background-color: var(--color-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.dark {
+  /* Dark Mode Variables */
+  --color-background: #09090b;
+  --color-surface: #18181b;
+  --color-text-main: rgba(255, 255, 255, 0.87);
+  --color-text-muted: #a1a1aa;
+  
+  color-scheme: dark;
+  color: var(--color-text-main);
+  background-color: var(--color-background);
 }
 
 body {

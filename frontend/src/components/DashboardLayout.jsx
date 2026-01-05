@@ -17,9 +17,31 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
 export const DashboardLayout = ({ children, activeTab, setActiveTab }) => {
     const [isDarkMode, setIsDarkMode] = React.useState(true);
 
+    React.useEffect(() => {
+        // Check local storage or system preference
+        const savedTheme = localStorage.getItem('theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+            setIsDarkMode(true);
+            document.documentElement.classList.add('dark');
+        } else {
+            setIsDarkMode(false);
+            document.documentElement.classList.remove('dark');
+        }
+    }, []);
+
     const toggleTheme = () => {
-        setIsDarkMode(!isDarkMode);
-        // Future: Implement actual theme switching logic here (e.g., updating document class)
+        const newMode = !isDarkMode;
+        setIsDarkMode(newMode);
+
+        if (newMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
     };
 
     return (
