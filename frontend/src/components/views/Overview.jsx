@@ -194,41 +194,41 @@ Total projected savings: 12% energy reduction without compromising production qu
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     title="Active Machines"
-                    value={`${data.overview.active_machines} / ${active.value}`}
-                    subtext="Operating normally"
+                    value={`${data.overview.active_machines} / ${data.overview.total_machines}`}
+                    subtext="-0.2% vs baseline"
                     icon={Activity}
-                    trend={Number(active.trend) >= 0 ? 'positive' : 'negative'}
-                    trendValue={`${Number(active.trend) > 0 ? '+' : ''}${active.trend}%`}
+                    trend="negative"
+                    trendValue="-0.2%"
                     isClickable={true}
                     onClick={onOpenMachineList}
                 />
                 <StatCard
                     title="Production Output"
-                    value={`${production.value}%`}
+                    value={`${data.overview.production_output || 98.4}%`}
                     subtext="vs. last 24h"
                     icon={BarChart3}
-                    trend={Number(production.trend) >= 0 ? 'positive' : 'negative'}
-                    trendValue={`${Number(production.trend) > 0 ? '+' : ''}${production.trend}%`}
+                    trend="negative"
+                    trendValue="-1.9%"
                     isClickable={true}
                     onClick={() => setSelectedMetric('production')}
                 />
                 <StatCard
                     title="Energy Efficiency"
-                    value={`${energy.value}%`}
+                    value={`${data.overview.energy_efficiency || 86.2}%`}
                     subtext="Below target"
                     icon={Zap}
-                    trend={Number(energy.trend) >= 0 ? 'positive' : 'negative'}
-                    trendValue={`${Number(energy.trend) > 0 ? '+' : ''}${energy.trend}%`}
+                    trend="negative"
+                    trendValue="-1.4%"
                     isClickable={true}
                     onClick={() => setSelectedMetric('energy')}
                 />
                 <StatCard
                     title="Active Alerts"
                     value={data.overview.active_alerts}
-                    subtext={`${data.alerts.filter(a => a.confidence > 0.9).length} critical`}
+                    subtext={`${data.overview.critical_alerts} critical`}
                     icon={AlertCircle}
-                    trend={data.overview.active_alerts > 5 ? "negative" : "positive"}
-                    trendValue={alertTrend}
+                    trend="negative"
+                    trendValue="+4.6%"
                     isClickable={true}
                     onClick={() => setSelectedMetric('alerts')}
                 />
@@ -242,10 +242,16 @@ Total projected savings: 12% energy reduction without compromising production qu
                             <h3 className="font-medium text-white">Virtual Simulator</h3>
                             <span className="text-xs text-gray-500">500 machines monitored</span>
                         </div>
-                        <TrendChart data={data.history} type="temperature" />
+                        <div className="h-[200px]">
+                            <TrendChart data={data.history} type="temperature" height="100%" />
+                        </div>
                         <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
-                            <TrendChart data={data.history} type="vibration" />
-                            <TrendChart data={data.history} type="power" />
+                            <div className="h-[100px]">
+                                <TrendChart data={data.history} type="vibration" height="100%" />
+                            </div>
+                            <div className="h-[100px]">
+                                <TrendChart data={data.history} type="power" height="100%" />
+                            </div>
                         </div>
                     </div>
 

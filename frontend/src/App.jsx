@@ -8,7 +8,7 @@ import { SettingsView } from './components/views/SettingsView';
 import { MachineListModal } from './components/MachineListModal';
 import api from './api';
 
-const SPECIFIC_ALERTS = ['M-080', 'M-103', 'M-105', 'M-151', 'M-162', 'M-182', 'M-212', 'M-221', 'M-229', 'M-241', 'M-261', 'M-265', 'M-274', 'M-279', 'M-313', 'M-321', 'M-434', 'M-461', 'M-464', 'M-482', 'M-491'];
+const SPECIFIC_ALERTS = []; // Deprecated: Now using real backend alerts
 
 function App() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -21,35 +21,37 @@ function App() {
   });
   const [isMachineListOpen, setIsMachineListOpen] = useState(false);
 
-  // Generate 500 machine entries ONE time at App level
+  // Generate 500 machine entries based on API data where possible
   const machineList = useMemo(() => {
+    // Get list of IDs that have alerts from the backend
+    const alertIds = data.alerts.map(a => a.machine_id);
+
     return Array.from({ length: 500 }, (_, i) => {
       const id = `M-${(i + 1).toString().padStart(3, '0')}`;
-      const isOff = Math.random() < 0.02; // Reduced to 2% chance of being OFF to match ~500 count
+      const isOff = i >= 490; // Fixed: Last 10 machines OFF (490 Active)
 
       let condition = 'Normal';
       let color = 'text-success bg-success/10';
 
-      if (SPECIFIC_ALERTS.includes(id)) {
+      // Use backend data for Critical status
+      if (alertIds.includes(id)) {
         condition = 'Critical';
         color = 'text-danger bg-danger/10';
       } else {
+        // Fallback random "Below Normal" for variety if not critical
+        // But strictly stick to 0 Criticals if backend says 0
         const rand = Math.random();
-        if (rand > 0.98) {
-          condition = 'Critical';
-          color = 'text-danger bg-danger/10';
-        } else if (rand > 0.9) {
+        if (rand > 0.95) {
           condition = 'Below Normal';
           color = 'text-warning bg-warning/10';
         }
       }
 
-      // Diagnostics Data (For Expert System View)
       const diagnostics = {
-        ruleProcessingCost: `${(Math.random() * 5 + 10).toFixed(1)}ms`, // ~10-15ms
-        kbHitRate: `${(Math.random() * 2 + 97).toFixed(1)}%`, // ~97-99%
-        reliability: `${(Math.random() * 10 + 85).toFixed(0)}%`, // ~85-95%
-        projected: `${(Math.random() * 10 + 82).toFixed(1)}%`, // ~82-92%
+        ruleProcessingCost: `${(Math.random() * 5 + 10).toFixed(1)}ms`,
+        kbHitRate: `${(Math.random() * 2 + 97).toFixed(1)}%`,
+        reliability: `${(Math.random() * 10 + 85).toFixed(0)}%`,
+        projected: `${(Math.random() * 10 + 82).toFixed(1)}%`,
         lastScan: new Date().toLocaleTimeString(),
         details: condition === 'Normal'
           ? 'Routine diagnostic cycle complete. All operating parameters within nominal thresholds.'
@@ -58,7 +60,7 @@ function App() {
 
       return { id, status: isOff ? 'OFF' : 'ON', condition, color, diagnostics };
     });
-  }, []);
+  }, [data.alerts]); // Re-calculate when alerts change
 
   const activeMachinesCount = machineList.filter(m => m.status === 'ON').length;
 
@@ -91,31 +93,53 @@ function App() {
     };
   }, [machineList, activeMachinesCount]);
 
+  const [error, setError] = useState(null);
+
   const fetchData = async () => {
     try {
-      const [overviewRes, trendsRes, alertsRes, machinesRes] = await Promise.all([
+      const results = await Promise.allSettled([
         api.get('/dashboard/overview'),
         api.get('/dss/trends'),
         api.get('/es/diagnoses'),
-        api.get('/machines')
+        api.get('/machines'),
+        api.get('/dss/forecast'),
+        api.get('/dashboard/history')
       ]);
 
-      const mockHistory = machinesRes.data.map((m, i) => ({
-        timestamp: new Date(Date.now() - i * 3600000).toISOString(),
-        temperature: m.temperature,
-        vibration: m.vibration,
-        power: m.power,
-        signals: Math.floor(Math.random() * (1500 - 500) + 500) // Random signals between 500-1500
-      })).reverse();
+      // Helper to safely extract data or return default
+      const getVal = (res, def) => (res.status === 'fulfilled' ? res.value.data : def);
+
+      const overviewData = getVal(results[0], { active_machines: activeMachinesCount, active_alerts: 0, total_machines: 500 });
+      const trendsData = getVal(results[1], { avg_temp: 0, avg_vib: 0 });
+      const alertsData = getVal(results[2], []);
+      const machinesData = getVal(results[3], []); // Not used for history but good to have
+      const forecastData = getVal(results[4], { current_efficiency: 94.0 });
+      const historyData = getVal(results[5], []);
+
+      // Check if critical endpoints failed
+      if (results[0].status === 'rejected' || results[5].status === 'rejected') {
+        setError("Connection to backend server unstable. Some data may be outdated.");
+      } else {
+        setError(null);
+      }
+
+      // Safe Overview merge
+      const safeOverview = {
+        ...overviewData,
+        active_machines: activeMachinesCount,
+        total_machines: overviewData.total_machines || 500
+      };
 
       setData({
-        overview: { ...overviewRes.data, active_machines: activeMachinesCount }, // Override with frontend sync
-        trends: trendsRes.data,
-        history: mockHistory,
-        alerts: alertsRes.data
+        overview: safeOverview,
+        trends: trendsData,
+        history: historyData,
+        alerts: alertsData,
+        forecast: forecastData
       });
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
+    } catch (err) {
+      console.error("Critical Fetch Error:", err);
+      setError("Failed to connect to system API. Please ensure backend is running.");
     } finally {
       setLoading(false);
     }
@@ -126,6 +150,10 @@ function App() {
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [activeMachinesCount]);
+
+  if (loading && !data.history.length) {
+    return <div className="min-h-screen bg-background flex items-center justify-center text-primary animate-pulse">Initializing System...</div>;
+  }
 
   if (loading && !data.history.length) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-primary animate-pulse">Initializing System...</div>;
@@ -145,7 +173,7 @@ function App() {
           data={data}
           onOpenMachineList={() => setIsMachineListOpen(true)}
         />;
-      case 'dss': return <DSSView />;
+      case 'dss': return <DSSView forecast={data.forecast} />;
       case 'es': return <ESView alerts={data.alerts} />;
       case 'settings': return <SettingsView />;
       default: return <Overview data={data} />;
@@ -154,6 +182,11 @@ function App() {
 
   return (
     <DashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      {error && (
+        <div className="bg-danger/10 border-b border-danger/20 text-danger px-6 py-2 text-sm flex items-center justify-center animate-pulse">
+          {error}
+        </div>
+      )}
       {renderContent()}
       <MachineListModal
         isOpen={isMachineListOpen}

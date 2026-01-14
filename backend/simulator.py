@@ -5,47 +5,97 @@ from typing import List
 from .models import MachineData
 import random
 
+from .database import db
+
 class Simulator:
     def __init__(self, num_machines=500):
-        self.num_machines = num_machines
-        self.machines = [f"M-{i:03d}" for i in range(1, num_machines + 1)]
+        self.num_machines = 500
+        # Simulating all 500 machines now
+        self.machines = [f"M-{i:03d}" for i in range(1, 501)]
+        # We'll call ensure_history from main.py startup to avoid circular import issues or double init
+    
+    def ensure_history(self):
+        """Check if DB has data. If not, generate 24h of history."""
+        try:
+            # Check if we have recent data (Optimization: Check DB directly)
+            if db.has_any_data():
+                 print("Database already has data. Skipping heavy backfill.")
+                 # In a real app we'd check for gaps, but for this demo, if DB exists, we assume good.
+                 # If user deleted DB file, this would return False and we regen.
+                 return
 
-    def generate_data(self, hours=1, anomaly_prob=0.05) -> pd.DataFrame:
-        data = []
-        current_time = datetime.now()
-        
-        for i in range(hours):
-            timestamp = current_time - timedelta(hours=i)
-            for machine_id in self.machines:
-                # Base values
-                temp = np.random.normal(70, 5) # Normal temp around 70C
-                vib = np.random.normal(50, 10) # Normal vibration around 50Hz
-                power = np.random.normal(10, 2) # Normal power around 10kW
+            print("No data found. Initializing DB with 24 hours of history...")
+            
+            # 1. Backfill 24 Hours (Hourly resolution)
+            print("Generating 24h hourly backbone...")
+            for i in range(24):
+                t = datetime.now() - timedelta(hours=24-i)
+                # Only if older than 1h (since next loop handles last hour)
+                if t < datetime.now() - timedelta(hours=1):
+                        self.generate_tick(t, persist=True)
+            
+            # 2. Backfill Last 60 Minutes (Minute resolution)
+            print("Generating last 60m minutely detail...")
+            for i in range(60):
+                t = datetime.now() - timedelta(minutes=60-i)
+                self.generate_tick(t, persist=True)
                 
-                # Anomaly Injection
-                if random.random() < anomaly_prob:
-                    type_anomaly = random.choice(['temp', 'vib', 'both'])
-                    if type_anomaly == 'temp':
-                        temp += np.random.uniform(20, 40)
-                    elif type_anomaly == 'vib':
-                        vib += np.random.uniform(50, 80)
-                    else:
-                        temp += np.random.uniform(20, 40)
-                        vib += np.random.uniform(50, 80)
+            print("History initialized.")
+        except Exception as e:
+            print(f"History init failed: {e}")
 
-                data.append({
-                    "machine_id": machine_id,
-                    "timestamp": timestamp,
-                    "temperature": round(temp, 2),
-                    "vibration": round(vib, 2),
-                    "power": round(power, 2)
-                })
-        
-        return pd.DataFrame(data)
+    def generate_tick(self, timestamp=None, persist=True) -> List[dict]:
+        """Generate a single snapshot of data for all machines"""
+        if timestamp is None:
+            timestamp = datetime.now()
+            
+        data = []
+        for machine_id in self.machines:
+            # Base values
+            temp = np.random.normal(70, 5) 
+            vib = np.random.normal(50, 10) 
+            power = np.random.normal(10, 2) 
+            
+            # Forced Criticals
+            forced_critical = ['M-015', 'M-088', 'M-105', 'M-200', 'M-404']
+            if machine_id in forced_critical:
+                temp += 45
+                vib += 80
+            elif random.random() < 0.05: # Random anomalies
+                type_anomaly = random.choice(['temp', 'vib', 'both'])
+                if type_anomaly == 'temp': temp += 30
+                elif type_anomaly == 'vib': vib += 60
+                else: temp += 30; vib += 60
+
+            data.append({
+                "machine_id": machine_id,
+                "timestamp": timestamp.isoformat(),
+                "temperature": round(temp, 2),
+                "vibration": round(vib, 2),
+                "power": round(power, 2),
+                "status": "running"
+            })
+            
+        if persist:
+            try:
+                db.insert_readings(data)
+            except Exception as e:
+                print(f"Insert failed: {e}")
+                
+        return data
 
     def get_latest_readings(self) -> List[MachineData]:
-        df = self.generate_data(hours=1)
-        # Convert DataFrame rows to MachineData objects
-        return [MachineData(**row) for row in df.to_dict(orient='records')]
+        # Try to fetch from DB first (Last distinct reading per machine)
+        try:
+             # Fast check for current data
+             rows = db.get_latest_readings(limit=500)
+             if len(rows) > 400:
+                 return [MachineData(**row) for row in rows]
+        except Exception as e:
+            print(f"Fetch failed: {e}")
+
+        # If no fresh data, generate new tick and persist
+        raw_data = self.generate_tick()
+        return [MachineData(**row) for row in raw_data]
 
 simulator = Simulator()

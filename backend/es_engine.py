@@ -45,4 +45,10 @@ class ESEngine:
                 
         return diagnoses
 
+    def diagnose_all(self, readings: List[MachineData]) -> List[Diagnosis]:
+        all_diagnoses = []
+        for reading in readings:
+            all_diagnoses.extend(self.diagnose(reading))
+        return all_diagnoses
+
 es_engine = ESEngine()

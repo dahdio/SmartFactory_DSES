@@ -32,7 +32,9 @@ export const AlertFeed = ({ alerts }) => {
                 {selectedAlert && (
                     <div className="space-y-4">
                         <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                            <h4 className="font-bold text-primary mb-1">Work Order #WO-{Math.floor(Math.random() * 9000) + 1000}</h4>
+                            <h4 className="font-bold text-primary mb-1">
+                                Work Order #WO-{selectedAlert.machine_id.replace(/\D/g, '')}{selectedAlert.condition.length.toString().padStart(2, '0')}
+                            </h4>
                             <p className="text-sm text-gray-300">Generated for machine {selectedAlert.machine_id}</p>
                         </div>
                         <div>

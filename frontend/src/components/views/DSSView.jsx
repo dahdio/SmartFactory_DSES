@@ -2,7 +2,16 @@ import React from 'react';
 import { WhatIfControls } from '../WhatIfControls';
 import { Brain, TrendingUp } from 'lucide-react';
 
-export const DSSView = () => {
+export const DSSView = ({ forecast }) => {
+    // Default fallback if loading or null
+    const fData = forecast || {
+        reason: "Analyzing current operating parameters...",
+        degradation: 0,
+        current_efficiency: 0,
+        projected_efficiency: 0,
+        timeframe: "4 hours"
+    };
+
     return (
         <div className="space-y-6 max-w-4xl mx-auto">
             <div className="flex items-center gap-4 mb-2">
@@ -26,14 +35,17 @@ export const DSSView = () => {
                             <h3 className="font-medium text-white">Efficiency Forecast</h3>
                         </div>
                         <p className="text-gray-400 text-sm">
-                            Based on current operating parameters, overall plant efficiency is projected to degrade by 1.5% over the next 4 hours due to thermal throttling in Sector 7.
+                            Based on current operating parameters, overall plant efficiency is projected to degrade by <span className="text-white font-bold">{fData.degradation}%</span> over the next {fData.timeframe} due to {fData.reason.toLowerCase()}.
                         </p>
                         <div className="mt-4 h-2 bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-accent w-[85%]"></div>
+                            <div
+                                className="h-full bg-accent transition-all duration-1000"
+                                style={{ width: `${fData.projected_efficiency}%` }}
+                            ></div>
                         </div>
                         <div className="flex justify-between text-xs text-gray-500 mt-2">
-                            <span>Current: 94%</span>
-                            <span>Projected: 92.5%</span>
+                            <span>Current: {fData.current_efficiency}%</span>
+                            <span>Projected: {fData.projected_efficiency}%</span>
                         </div>
                     </div>
                 </div>

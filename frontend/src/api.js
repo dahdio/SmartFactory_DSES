@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api', // FastAPI default port
+    baseURL: 'http://localhost:8000/api', // Reverted to default port 8000
     timeout: 5000,
 });
 
